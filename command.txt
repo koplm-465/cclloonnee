@@ -1,0 +1,65 @@
+Google Colab မှာ နောက်တစ်ကြိမ် run ဖို့ Final Commands ကို အောက်မှာပေးထားပါတယ်။ Colab Runtime အသစ်ဖြစ်တိုင်း install အပိုင်းကို တစ်ကြိမ် run လုပ်ရပါမယ်။
+
+Runtime အသစ် / ပထမဆုံး Setup
+Colab မှာ Runtime → Change runtime type → T4 GPU ရွေးပြီး Terminal ကိုဖွင့်ပါ။
+#############################
+cd /content
+
+############ Repository မရှိသေးရင် clone လုပ်ရန်
+if [ ! -d "/content/cclloonnee" ]; then
+    git clone https://github.com/KP-CHANNEL-KP/cclloonnee.git /content/cclloonnee
+fi
+
+cd /content/cclloonnee
+
+############## GPU စစ်ရန်
+nvidia-smi
+
+# Colab Python environment ကို တိုက်ရိုက်သုံးပါ။ venv မသုံးပါနှင့်။
+python -m pip install --upgrade pip setuptools wheel setuptools_scm
+
+# ZIP ထဲ .git metadata မပါသော်လည်း version error မဖြစ်အောင်
+export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VOXCPM=0.0.0
+
+# Project dependencies install လုပ်ရန်
+pip install --no-build-isolation -e .
+Progress Error မဖြစ်အောင် ပြင်ရန်
+track_tqdm=True ကြောင့် ဖြစ်ခဲ့တဲ့ NoneType object is not an iterator error ကိုရှောင်ရန်—
+Bash
+cd /content/cclloonnee
+sed -i 's/gr.Progress(track_tqdm=True )/gr.Progress()/g' app.py
+Public URL မပေါ်သေးရင် share=True ထည့်ရန်—
+Bash
+grep -q 'share=True' app.py || sed -i '/css=_CUSTOM_CSS,/a\        share=True,' app.py
+GPU နှင့် Dependency စစ်ရန်
+Bash
+export PYTHONPATH="/content/cclloonnee/src:$PYTHONPATH"
+
+python -c "import voxcpm, funasr, torch; print('VoxCPM:', voxcpm.__file__); print('CUDA:', torch.cuda.is_available()); print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'Not found')"
+ဒီလိုပြရပါမယ်။
+text
+CUDA: True
+GPU: Tesla T4
+App Run ရန်
+Bash
+cd /content/cclloonnee
+export PYTHONPATH="/content/cclloonnee/src:$PYTHONPATH"
+python app.py --host 0.0.0.0 --port 8808 --device cuda
+Terminal မှာ ဒီလို URL ပေါ်လာပါမယ်။
+text
+Running on public URL: https://xxxx.gradio.live
+အဲဒီ https://...gradio.live link ကို browser မှာဖွင့်ပါ။
+နောက်တစ်ကြိမ် Run ရုံပဲလုပ်မယ်ဆိုရင်
+Runtime မပြတ်သေးဘဲ dependencies install ပြီးသားဆိုရင် အောက်က command ၄ ကြောင်းနဲ့ရပါပြီ။
+Bash
+cd /content/cclloonnee
+export PYTHONPATH="/content/cclloonnee/src:$PYTHONPATH"
+sed -i 's/gr.Progress(track_tqdm=True )/gr.Progress()/g' app.py
+python app.py --host 0.0.0.0 --port 8808 --device cuda
+App ရပ်ပြီး ပြန်စရန်
+App run နေတဲ့ Terminal မှာ—
+text
+Ctrl + C
+နှိပ်ပြီး ရပ်ပါ။ ပြီးရင် run command ကို ပြန် run ပါ။
+မှတ်ရန်
+Killed ဖြစ်တာက RAM မလုံလောက်တာဖြစ်နိုင်တာကြောင့် reference audio တင်ပြီး ASR အလိုအလျောက်မတက်အောင် ပြင်ထားတဲ့ app.py ကိုသုံးပါ။ track_tqdm=True ကို မသုံးပါနဲ့။ CUDA: True မဖြစ်သေးရင် --device cuda နဲ့ မစဘဲ Colab GPU runtime ကို ပြန်ရွေးပါ။
